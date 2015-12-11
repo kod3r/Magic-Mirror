@@ -2,34 +2,182 @@ import forecastio
 import time
 import imaplib
 import email
+
 from yahoo_finance import Share
 from Tkinter import *
 from datetime import date
 
-the_temp = ''
-the_time = ''
-the_date = ''
-the_forecast = ''
-the_count = ''
-the_email_subject = ''
-the_financials = ''
-
-ELI_SARAH_DATE = date(2013, 11, 10)
+the_temp, the_time, the_date, the_forecast, the_count, the_email_subject, the_finances = '', '', '', '', '', '', ''
 FONT = 60
-PASSWORD = ''
-LONGITUDE = 122
-LATITUDE = 49
-FORECASTIO_API = ''
+FONT_2 = 45
 
-forecast = forecastio.load_forecast(FORECASTIO_API, LATITUDE, LONGITUDE)
+text_file = open("parameters.txt", "r")
+parameters = text_file.read().splitlines()
+text_file.close()
 
-mutual_fund_price = Share('F000000S68.TO')
+PASSWORD = parameters[0]
+LATITUDE = parameters[1]
+LONGITUDE = parameters[2]
+FORECAST_IO_API = parameters[3]
+SIGNIFICANT_DATE = parameters[4]
+STOCK = parameters[5]
 
-M = imaplib.IMAP4_SSL('imap.gmail.com')
-try:
-    M.login('captain.eli.mirror@gmail.com', PASSWORD)
-except imaplib.IMAP4.error:
-    print"Error logging into email!"
+
+
+
+
+class Main:
+    def __init__(self, master):
+        self.master = master
+        self.mainframe = Frame(self.master, bg='black')
+        self.mainframe.pack(fill=BOTH, expand=True)
+        self.build_grid()
+
+        self.create_email_display()
+        self.create_count_up()
+        self.create_meteorology()
+        self.create_finances()
+        self.create_date_time()
+
+    def build_grid(self):
+        self.mainframe.columnconfigure(0, weight=1)
+        self.mainframe.columnconfigure(1, weight=1)
+        self.mainframe.rowconfigure(0, weight=0)
+        self.mainframe.rowconfigure(1, weight=1)
+        self.mainframe.rowconfigure(2, weight=0)
+
+
+    def create_email_display(self):
+        self.display_email_subject = Label(self.mainframe, text=the_email_subject)
+        self.display_email_subject.grid(row=0, column=0, sticky='nw')
+
+        def change_the_emails():
+            global the_email_subject
+            mail = initialize_mail_account()
+            rv, data = mail.select("INBOX")
+            if rv == 'OK':
+                latest_email = process_mailbox(mail)
+                mail.close()
+
+            if the_email_subject != latest_email:
+                the_email_subject = latest_email
+                self.display_email_subject.config(
+                    text= the_email_subject,
+                    font=("Helvetica", FONT_2),
+                    bg='black',
+                    fg='white',
+                    justify='right'
+                )
+
+            self.display_email_subject.after(300000, change_the_emails)
+        change_the_emails()
+
+    def create_count_up(self):
+        self.display_count_up = Label(self.mainframe)
+        self.display_count_up.grid(row=2, column=0,sticky='sw')
+
+        def change_the_count():
+            global the_count
+            today = date.today()
+
+            sig_year = int(SIGNIFICANT_DATE[0:4])
+            sig_month = int(SIGNIFICANT_DATE[5:7])
+            sig_day = int(SIGNIFICANT_DATE[8:10])
+            count_today = (today - date(sig_year, sig_month, sig_day)).days
+
+            if the_count != count_today:
+                the_count = count_today
+                count_string = str(the_count) + " days with Sarah"
+                self.display_count_up.config(
+                    text=count_string,
+                    font=("Helvetica", FONT_2),
+                    bg='black',
+                    fg='white',
+                    justify='right'
+                )
+            self.display_count_up.after(10800000, change_the_count)
+        change_the_count()
+
+    def create_meteorology(self):
+        self.display_forecast = Label(self.mainframe)
+        self.display_forecast.grid(row=2, column=1, sticky='es')
+
+        def change_forecast_value():
+            global the_forecast
+            forecast = forecastio.load_forecast(FORECAST_IO_API, LATITUDE, LONGITUDE)
+
+            now = forecast.currently()
+            now_forecast = now.summary
+            now_temp = now.temperature
+            later = forecast.hourly()
+            later_forecast = later.summary
+
+            now_later = str(int(now_temp)) + "C " + now_forecast + "\n" + later_forecast
+
+            if the_forecast != now_later:
+                the_forecast = now_later
+                self.display_forecast.config(
+                    text=now_later,
+                    font=("Helvetica", FONT_2),
+                    bg='black',
+                    fg='white',
+                    justify='right',
+                    )
+            self.display_forecast.after(900000, change_forecast_value)
+        change_forecast_value()
+
+    def create_finances(self):
+        self.display_finances = Label(self.mainframe)
+        self.display_finances.grid(row=1, column=0, sticky='w')
+
+        stock_price = Share(STOCK)
+
+        def change_finance_values():
+            global the_finances
+            price = stock_price.get_price()
+            change = stock_price.get_change()
+            latest_data = price[0:5] + " (" + change[0:5] + ")"
+            if the_finances != latest_data:
+                the_finances = latest_data
+                self.display_finances.config(
+                    text=the_finances,
+                    font=("Helvetica", FONT),
+                    bg='black',
+                    fg='white',
+                    justify='right'
+                )
+
+            self.display_finances.after(1000*60*60*15, change_finance_values)
+        change_finance_values()
+
+    def create_date_time(self):
+        self.display_date_time = Label(self.mainframe)
+        self.display_date_time.grid(row=0, column=1, sticky='ne')
+
+        def change_time_value():
+            global the_time
+            new_time = time.strftime('%I:%M:%S \n %b %d, %Y')
+            if new_time != the_time:
+                the_time = new_time
+                self.display_date_time.config(
+                    text=the_time,
+                    font=("Helvetica", FONT),
+                    bg='black',
+                    fg='white',
+                    justify='right'
+                )
+
+            self.display_date_time.after(999, change_time_value)
+        change_time_value()
+
+
+def initialize_mail_account():
+    M = imaplib.IMAP4_SSL('imap.gmail.com')
+    try:
+        M.login('captain.eli.mirror@gmail.com', PASSWORD)
+    except imaplib.IMAP4.error:
+        print"Error logging into email!"
+    return M
 
 
 def process_mailbox(m):
@@ -48,200 +196,10 @@ def process_mailbox(m):
         message = email.message_from_string(data[0][1])
         output += message['Subject']
 
-        return output
-
-
-class Main:
-    def __init__(self, master):
-        self.master = master
-        self.mainframe = Frame(self.master, bg='black')
-        self.mainframe.pack(fill=BOTH, expand=True)
-        self.build_grid()
-        self.create_widgets()
-        self.build_meteorology()
-        self.build_counter()
-        self.build_emails()
-        self.build_financials()
-
-    def build_grid(self):
-        self.mainframe.columnconfigure(0, weight=1)
-        self.mainframe.rowconfigure(0, weight=0)
-        self.mainframe.rowconfigure(1, weight=0)
-        self.mainframe.rowconfigure(2, weight=0)
-        self.mainframe.rowconfigure(3, weight=1)
-        self.mainframe.rowconfigure(4, weight=0)
-        self.mainframe.rowconfigure(5, weight=0)
-
-    def build_emails(self):
-        self.display_email_subject = Label(self.mainframe, text=the_email_subject)
-        self.display_email_subject.grid(
-            row=0, column=0,
-            sticky='w'
-        )
-
-        def change_the_emails():
-            global the_email_subject
-            latest_email = ''
-            rv, data = M.select("INBOX")
-            if rv == 'OK':
-                latest_email = process_mailbox(M)
-                M.close()
-
-            if the_email_subject != latest_email:
-                the_email_subject = latest_email
-                self.display_email_subject.config(
-                    text= the_email_subject,
-                    font=("Helvetica", 26),
-                    bg='black',
-                    fg='white',
-                    justify='right'
-                )
-
-            self.display_email_subject.after(300000, change_the_emails)
-        change_the_emails()
-
-    def build_financials(self):
-        self.display_financials = Label(self.mainframe, text=the_financials)
-        self.display_financials.grid(
-            row=3, column=0,
-            sticky='w'
-        )
-
-        def change_the_financials():
-            global the_financials
-            latest_data = mutual_fund_price.get_price()
-            if the_financials != latest_data:
-                the_financials = latest_data
-                self.display_financials.config(
-                    text=the_financials,
-                    font=("Helvetica", FONT),
-                    bg='black',
-                    fg='white',
-                    justify='right'
-                )
-            self.display_financials.after(1000*60*60*15, change_the_financials)
-        change_the_financials()
-
-    def build_counter(self):
-        self.display_count = Label(self.mainframe, text=the_count)
-        self.display_count.grid(
-            row=5, column=0,
-            sticky='w'
-        )
-
-        def change_the_count():
-            global the_count
-            today = date.today()
-            count_today = (today - ELI_SARAH_DATE).days
-            if the_count != count_today:
-                the_count = count_today
-                count_string = str(the_count) + " days with Sarah"
-                self.display_count.config(
-                    text=count_string,
-                    font=("Helvetica", 30),
-                    bg='black',
-                    fg='white',
-                    justify='right'
-                )
-            self.display_time.after(10800000, change_the_count)
-        change_the_count()
-
-    def build_meteorology(self):
-        self.display_temp = Label(self.mainframe, text=the_temp)
-        self.display_temp.grid(
-            row=4, column=0,
-            sticky='es'
-        )
-        self.display_forecast = Label(self.mainframe, text=the_forecast)
-        self.display_forecast.grid(
-            row=5, column=0,
-            sticky = 'es'
-        )
-
-        def change_value_the_temp():
-            global the_temp
-            now = forecast.currently()
-            new_temp = now.temperature
-            if new_temp != the_temp:
-                the_temp = new_temp
-                this_string = str(int(the_temp)) + "C"
-                self.display_temp.config(
-                    text=this_string,
-                    font=("Helvetica", FONT),
-                    bg='black',
-                    fg='white',
-                    justify='right'
-                )
-            self.display_time.after(300000, change_value_the_temp)
-        change_value_the_temp()
-
-        def change_value_the_forecast():
-            global the_forecast
-            now = forecast.currently()
-            new_forecast = now.summary
-
-            print new_forecast
-
-            if new_forecast != the_forecast:
-                the_forecast = new_forecast
-                self.display_forecast.config(
-                    text=the_forecast,
-                    font=("Helvetica", FONT),
-                    bg='black',
-                    fg='white',
-                    justify='right',
-                )
-            self.display_forecast.after(900000, change_value_the_forecast)
-        change_value_the_forecast()
-
-    def create_widgets(self):
-        self.display_time = Label(self.mainframe, text=the_time)
-        self.display_time.grid(
-            row=1, column=0,
-            sticky='e'
-        )
-
-        self.display_date = Label(self.mainframe, text=the_date)
-        self.display_date.grid(
-            row=0, column=0,
-            sticky='e'
-                               )
-
-        def change_value_the_date():
-            global the_date
-            new_date = time.strftime("%b %d").upper()
-            if new_date != the_date:
-                the_date = new_date
-                self.display_date.config(
-                    text=the_date,
-                    font=("Helvetica", FONT),
-                    bg='black',
-                    fg='white',
-                    justify='right'
-                )
-
-            self.display_time.after(10800000, change_value_the_date)
-        change_value_the_date()
-
-        def change_value_the_time():
-            global the_time
-            new_time = time.strftime('%I:%M:%S')
-            if new_time != the_time:
-                the_time = new_time
-                self.display_time.config(
-                    text=the_time,
-                    font=("Helvetica", FONT),
-                    bg='black',
-                    fg='white',
-                    justify='right'
-                )
-
-            self.display_time.after(999, change_value_the_time)
-        change_value_the_time()
-
+        return output[0:66]
 
 if __name__ == '__main__':
     root = Tk()
-    root.attributes('-fullscreen', True)
+    #root.attributes('-fullscreen', True)
     Main(root)
     root.mainloop()
