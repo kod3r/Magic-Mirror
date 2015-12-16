@@ -2,12 +2,14 @@ import forecastio
 import time
 import imaplib
 import email
+import datetime
 
-from yahoo_finance import Share
+from googlefinance import getQuotes
 from Tkinter import *
-from datetime import date
+
 
 the_temp, the_time, the_date, the_forecast, the_count, the_email_subject, the_finances = '', '', '', '', '', '', ''
+yesterday_closing = None
 FONT = 60
 FONT_2 = 45
 
@@ -21,9 +23,6 @@ LONGITUDE = parameters[2]
 FORECAST_IO_API = parameters[3]
 SIGNIFICANT_DATE = parameters[4]
 STOCK = parameters[5]
-
-
-
 
 
 class Main:
@@ -41,11 +40,9 @@ class Main:
 
     def build_grid(self):
         self.mainframe.columnconfigure(0, weight=1)
-        self.mainframe.columnconfigure(1, weight=1)
         self.mainframe.rowconfigure(0, weight=0)
         self.mainframe.rowconfigure(1, weight=1)
         self.mainframe.rowconfigure(2, weight=0)
-
 
     def create_email_display(self):
         self.display_email_subject = Label(self.mainframe, text=the_email_subject)
@@ -68,29 +65,28 @@ class Main:
                     fg='white',
                     justify='right'
                 )
-
             self.display_email_subject.after(300000, change_the_emails)
         change_the_emails()
 
     def create_count_up(self):
         self.display_count_up = Label(self.mainframe)
-        self.display_count_up.grid(row=2, column=0,sticky='sw')
+        self.display_count_up.grid(row=1, column=0,sticky='e')
 
         def change_the_count():
             global the_count
-            today = date.today()
+            today = datetime.date.today()
 
             sig_year = int(SIGNIFICANT_DATE[0:4])
             sig_month = int(SIGNIFICANT_DATE[5:7])
             sig_day = int(SIGNIFICANT_DATE[8:10])
-            count_today = (today - date(sig_year, sig_month, sig_day)).days
+            count_today = (today - datetime.date(sig_year, sig_month, sig_day)).days
 
             if the_count != count_today:
                 the_count = count_today
-                count_string = str(the_count) + " days with Sarah"
+                count_string = "{} days with Sarah".format(the_count)
                 self.display_count_up.config(
                     text=count_string,
-                    font=("Helvetica", FONT_2),
+                    font=("Helvetica", FONT),
                     bg='black',
                     fg='white',
                     justify='right'
@@ -100,7 +96,7 @@ class Main:
 
     def create_meteorology(self):
         self.display_forecast = Label(self.mainframe)
-        self.display_forecast.grid(row=2, column=1, sticky='es')
+        self.display_forecast.grid(row=2, column=0, sticky='es')
 
         def change_forecast_value():
             global the_forecast
@@ -112,7 +108,7 @@ class Main:
             later = forecast.hourly()
             later_forecast = later.summary
 
-            now_later = str(int(now_temp)) + "C " + now_forecast + "\n" + later_forecast
+            now_later = "{}C {} \n {}".format(int(now_temp), now_forecast, later_forecast)
 
             if the_forecast != now_later:
                 the_forecast = now_later
@@ -130,15 +126,27 @@ class Main:
         self.display_finances = Label(self.mainframe)
         self.display_finances.grid(row=1, column=0, sticky='w')
 
-        stock_price = Share(STOCK)
-
         def change_finance_values():
             global the_finances
-            price = stock_price.get_price()
-            change = stock_price.get_change()
-            latest_data = price[0:5] + " (" + change[0:5] + ")"
-            if the_finances != latest_data:
-                the_finances = latest_data
+            global yesterday_closing
+
+            current_price = float(getQuotes('MUTF_CA:INI220')[0]['LastTradePrice'])
+
+            print datetime.datetime.now().strftime('%H')
+            if datetime.datetime.now().strftime('%H') == 00:
+                yesterday_closing = current_price
+
+            if yesterday_closing:
+                day_over_day = current_price - yesterday_closing
+                if day_over_day >= 0:
+                    display_string = "${} (+{})".format(current_price, day_over_day)
+                else:
+                    display_string = "${} ({})".format(current_price, day_over_day)
+            else:
+                display_string = "${}".format(current_price)
+
+            if the_finances != display_string:
+                the_finances = display_string
                 self.display_finances.config(
                     text=the_finances,
                     font=("Helvetica", FONT),
@@ -147,12 +155,12 @@ class Main:
                     justify='right'
                 )
 
-            self.display_finances.after(1000*60*60*15, change_finance_values)
+            self.display_finances.after(30*60*60*15, change_finance_values)
         change_finance_values()
 
     def create_date_time(self):
         self.display_date_time = Label(self.mainframe)
-        self.display_date_time.grid(row=0, column=1, sticky='ne')
+        self.display_date_time.grid(row=0, column=0, sticky='ne')
 
         def change_time_value():
             global the_time
@@ -178,6 +186,7 @@ def initialize_mail_account():
     except imaplib.IMAP4.error:
         print"Error logging into email!"
     return M
+
 
 
 def process_mailbox(m):
