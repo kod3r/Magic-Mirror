@@ -6,9 +6,9 @@ import datetime
 import Tkinter
 from googlefinance import getQuotes
 
-FONT = 60
+FONT_1 = 60
 FONT_2 = 45
-FONT_3 = 30
+FONT_3 = 35
 
 with open("parameters.txt", "r") as text_file:
     parameters = text_file.read().splitlines()
@@ -53,7 +53,7 @@ class Main(object):
         self.mainframe.rowconfigure(1, weight=1)
         self.mainframe.rowconfigure(2, weight=0)
 
-    def create_email_display(self):
+    def create_email_display(self, font_size=FONT_2):
         """ Creates a Tkinter label where email data can be displayed """
         self.display_email_subject = Tkinter.Label(self.mainframe)
         self.display_email_subject.grid(row=0, column=0, sticky='nw')
@@ -72,7 +72,7 @@ class Main(object):
                 self.the_email_subject = latest_email
                 self.display_email_subject.config(
                     text=self.the_email_subject,
-                    font=("Helvetica", FONT_2),
+                    font=("Helvetica", font_size),
                     bg='black',
                     fg='white',
                     justify='right'
@@ -80,7 +80,7 @@ class Main(object):
             self.display_email_subject.after(300000, change_the_emails)
         change_the_emails()
 
-    def create_count_up(self):
+    def create_count_up(self, font_size=FONT_1):
         """ Creates Label to display 'days since event' """
         self.display_count_up = Tkinter.Label(self.mainframe)
         self.display_count_up.grid(row=1, column=0, sticky='e')
@@ -98,7 +98,7 @@ class Main(object):
                 count_string = "{0} days with Sarah".format(self.the_count)
                 self.display_count_up.config(
                     text=count_string,
-                    font=("Helvetica", FONT),
+                    font=("Helvetica", font_size),
                     bg='black',
                     fg='white',
                     justify='right'
@@ -106,9 +106,9 @@ class Main(object):
             self.display_count_up.after(10800000, change_the_count)
         change_the_count()
 
-    def create_meteorology(self, font=FONT_3):
+    def create_meteorology(self, font_size=FONT_3):
         """ Makes label that includes temperature, weather and forecast
-        :param font: Can be changed to an int if not fitting on display """
+        :param font_size: Can be changed to an int if not fitting on display """
         self.display_forecast = Tkinter.Label(self.mainframe)
         self.display_forecast.grid(row=2, column=0, sticky='es')
 
@@ -129,7 +129,7 @@ class Main(object):
                 self.the_forecast = now_later_string
                 self.display_forecast.config(
                     text=now_later_string,
-                    font=("Helvetica", font),
+                    font=("Helvetica", font_size),
                     bg='black',
                     fg='white',
                     justify='right',
@@ -137,7 +137,7 @@ class Main(object):
             self.display_forecast.after(900000, change_forecast_value)
         change_forecast_value()
 
-    def create_finances(self):
+    def create_finances(self, font_size=FONT_1):
         """ Makes the Label for the financial information """
         self.display_finances = Tkinter.Label(self.mainframe)
         self.display_finances.grid(row=1, column=0, sticky='w')
@@ -146,8 +146,7 @@ class Main(object):
             """ Uses the Google Finance API to get most recent data. """
             current_price = float(getQuotes('MUTF_CA:INI220')[0]['LastTradePrice'])
 
-            if datetime.datetime.now().strftime('%H') == 00:
-                print "Time is 00"
+            if datetime.datetime.now().strftime('%H') == '00':
                 self.yesterday_closing = current_price
 
             if self.yesterday_closing:  # could be initialized to None
@@ -163,7 +162,7 @@ class Main(object):
                 self.the_finances = display_string
                 self.display_finances.config(
                     text=self.the_finances,
-                    font=("Helvetica", FONT),
+                    font=("Helvetica", font_size),
                     bg='black',
                     fg='white',
                     justify='right'
@@ -172,7 +171,7 @@ class Main(object):
             self.display_finances.after(30*60*60*15, change_finance_values)
         change_finance_values()
 
-    def create_date_time(self):
+    def create_date_time(self, font_size=FONT_2):
         """ Makes the label for displaying date, time. """
         self.display_date_time = Tkinter.Label(self.mainframe)
         self.display_date_time.grid(row=0, column=0, sticky='ne')
@@ -185,7 +184,7 @@ class Main(object):
                 self.the_date_time = new_date_time
                 self.display_date_time.config(
                     text=self.the_date_time,
-                    font=("Helvetica", FONT),
+                    font=("Helvetica", font_size),
                     bg='black',
                     fg='white',
                     justify='right'
