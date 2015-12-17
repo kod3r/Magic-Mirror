@@ -3,9 +3,10 @@ import time
 import imaplib
 import email
 import datetime
+import Tkinter
 
 from googlefinance import getQuotes
-from Tkinter import *
+
 
 
 the_temp, the_time, the_date, the_forecast, the_count, the_email_subject, the_finances = '', '', '', '', '', '', ''
@@ -25,11 +26,11 @@ SIGNIFICANT_DATE = parameters[4]
 STOCK = parameters[5]
 
 
-class Main:
+class Main(object):
     def __init__(self, master):
         self.master = master
-        self.mainframe = Frame(self.master, bg='black')
-        self.mainframe.pack(fill=BOTH, expand=True)
+        self.mainframe = Tkinter.Frame(self.master, bg='black')
+        self.mainframe.pack(fill=Tkinter.BOTH, expand=True)
         self.build_grid()
 
         self.create_email_display()
@@ -45,7 +46,7 @@ class Main:
         self.mainframe.rowconfigure(2, weight=0)
 
     def create_email_display(self):
-        self.display_email_subject = Label(self.mainframe, text=the_email_subject)
+        self.display_email_subject = Tkinter.Label(self.mainframe, text=the_email_subject)
         self.display_email_subject.grid(row=0, column=0, sticky='nw')
 
         def change_the_emails():
@@ -69,7 +70,7 @@ class Main:
         change_the_emails()
 
     def create_count_up(self):
-        self.display_count_up = Label(self.mainframe)
+        self.display_count_up = Tkinter.Label(self.mainframe)
         self.display_count_up.grid(row=1, column=0,sticky='e')
 
         def change_the_count():
@@ -95,7 +96,7 @@ class Main:
         change_the_count()
 
     def create_meteorology(self):
-        self.display_forecast = Label(self.mainframe)
+        self.display_forecast = Tkinter.Label(self.mainframe)
         self.display_forecast.grid(row=2, column=0, sticky='es')
 
         def change_forecast_value():
@@ -123,7 +124,7 @@ class Main:
         change_forecast_value()
 
     def create_finances(self):
-        self.display_finances = Label(self.mainframe)
+        self.display_finances = Tkinter.Label(self.mainframe)
         self.display_finances.grid(row=1, column=0, sticky='w')
 
         def change_finance_values():
@@ -160,7 +161,7 @@ class Main:
         change_finance_values()
 
     def create_date_time(self):
-        self.display_date_time = Label(self.mainframe)
+        self.display_date_time = Tkinter.Label(self.mainframe)
         self.display_date_time.grid(row=0, column=0, sticky='ne')
 
         def change_time_value():
@@ -209,7 +210,7 @@ def process_mailbox(m):
         return output[0:66]
 
 if __name__ == '__main__':
-    root = Tk()
+    root = Tkinter.Tk()
     root.attributes('-fullscreen', True)
     Main(root)
     root.mainloop()
