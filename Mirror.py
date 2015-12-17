@@ -134,6 +134,7 @@ class Main:
 
             print datetime.datetime.now().strftime('%H')
             if datetime.datetime.now().strftime('%H') == 00:
+                print "Time is 00"
                 yesterday_closing = current_price
 
             if yesterday_closing:
@@ -209,6 +210,6 @@ def process_mailbox(m):
 
 if __name__ == '__main__':
     root = Tk()
-    #root.attributes('-fullscreen', True)
+    root.attributes('-fullscreen', True)
     Main(root)
     root.mainloop()
