@@ -7,14 +7,14 @@ import Tkinter
 
 from googlefinance import getQuotes
 
-the_temp, the_time, the_date, the_forecast, the_count, the_email_subject, the_finances = '', '', '', '', '', '', ''
+the_temp, the_time, the_date, the_forecast, the_count, the_email_subject, = '', '', '', '', '', '',
 yesterday_closing = None
 FONT = 60
 FONT_2 = 45
 
-text_file = open("parameters.txt", "r")
-parameters = text_file.read().splitlines()
-text_file.close()
+with open("parameters.txt", "r") as text_file:
+    parameters = text_file.read().splitlines()
+
 
 PASSWORD = parameters[0]
 LATITUDE = parameters[1]
@@ -25,11 +25,16 @@ STOCK = parameters[5]
 
 
 class Main(object):
+    """Builds a Tkinter object and fills its grid with 5 strings with the
+    methods: create_email_display, create_count_up, create_meteorology,
+    create_finances and create_date_time"""
     def __init__(self, master):
         self.master = master
         self.mainframe = Tkinter.Frame(self.master, bg='black')
         self.mainframe.pack(fill=Tkinter.BOTH, expand=True)
         self.build_grid()
+
+        self.the_finances = None
 
         self.create_email_display()
         self.create_count_up()
@@ -126,7 +131,7 @@ class Main(object):
         self.display_finances.grid(row=1, column=0, sticky='w')
 
         def change_finance_values():
-            global the_finances
+            #global the_finances
             global yesterday_closing
 
             current_price = float(getQuotes('MUTF_CA:INI220')[0]['LastTradePrice'])
@@ -145,10 +150,10 @@ class Main(object):
             else:
                 display_string = "${0}".format(current_price)
 
-            if the_finances != display_string:
-                the_finances = display_string
+            if self.the_finances != display_string:
+                self.the_finances = display_string
                 self.display_finances.config(
-                    text=the_finances,
+                    text=self.the_finances,
                     font=("Helvetica", FONT),
                     bg='black',
                     fg='white',
