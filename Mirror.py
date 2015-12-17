@@ -83,7 +83,7 @@ class Main:
 
             if the_count != count_today:
                 the_count = count_today
-                count_string = "{} days with Sarah".format(the_count)
+                count_string = "{0} days with Sarah".format(the_count)
                 self.display_count_up.config(
                     text=count_string,
                     font=("Helvetica", FONT),
@@ -108,7 +108,7 @@ class Main:
             later = forecast.hourly()
             later_forecast = later.summary
 
-            now_later = "{}C {} \n {}".format(int(now_temp), now_forecast, later_forecast)
+            now_later = "{0}C {1} \n {2}".format(int(now_temp), now_forecast, later_forecast)
 
             if the_forecast != now_later:
                 the_forecast = now_later
@@ -140,11 +140,11 @@ class Main:
             if yesterday_closing:
                 day_over_day = current_price - yesterday_closing
                 if day_over_day >= 0:
-                    display_string = "${} (+{})".format(current_price, day_over_day)
+                    display_string = "${0} (+{1})".format(current_price, day_over_day)
                 else:
-                    display_string = "${} ({})".format(current_price, day_over_day)
+                    display_string = "${0} ({1})".format(current_price, day_over_day)
             else:
-                display_string = "${}".format(current_price)
+                display_string = "${0}".format(current_price)
 
             if the_finances != display_string:
                 the_finances = display_string
