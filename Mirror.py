@@ -13,17 +13,18 @@ FONT_3 = 30
 with open("parameters.txt", "r") as text_file:
     parameters = text_file.read().splitlines()
 
-
 PASSWORD = parameters[0]
 LATITUDE = parameters[1]
 LONGITUDE = parameters[2]
 FORECAST_IO_API = parameters[3]
 SIGNIFICANT_DATE = parameters[4]
 STOCK = parameters[5]
+EMAIL = parameters[6]
 
 
+# noinspection PyAttributeOutsideInit
 class Main(object):
-    """ Builds a Tkinter object and fills its grid with 5 strings with the
+    """ Builds a Tkinter object and fills its grid with 5 strings using the
     methods: create_email_display, create_count_up, create_meteorology,
     create_finances and create_date_time """
     def __init__(self, master):
@@ -58,10 +59,11 @@ class Main(object):
         self.display_email_subject.grid(row=0, column=0, sticky='nw')
 
         def change_the_emails():
-            """ Fetcheces """
+            """ Invokes methods to make sure the latest email is dislpayed """
 
-            mail = initialize_mail_account()
+            mail = initialize_mail_account(EMAIL, PASSWORD)
             rv, data = mail.select("INBOX")
+            latest_email = None
             if rv == 'OK':
                 latest_email = process_mailbox(mail)
                 mail.close()
@@ -79,8 +81,9 @@ class Main(object):
         change_the_emails()
 
     def create_count_up(self):
+        """ Creates Label to display 'days since event' """
         self.display_count_up = Tkinter.Label(self.mainframe)
-        self.display_count_up.grid(row=1, column=0,sticky='e')
+        self.display_count_up.grid(row=1, column=0, sticky='e')
 
         def change_the_count():
             today = datetime.date.today()
@@ -103,11 +106,14 @@ class Main(object):
             self.display_count_up.after(10800000, change_the_count)
         change_the_count()
 
-    def create_meteorology(self):
+    def create_meteorology(self, font=FONT_3):
+        """ Makes label that includes temperature, weather and forecast
+        :param font: Can be changed to an int if not fitting on display """
         self.display_forecast = Tkinter.Label(self.mainframe)
         self.display_forecast.grid(row=2, column=0, sticky='es')
 
-        def change_forecast_value(font=FONT_3):
+        def change_forecast_value():
+            """ Gets the most recent forecast/weather """
             forecast = forecastio.load_forecast(FORECAST_IO_API, LATITUDE, LONGITUDE)
 
             now = forecast.currently()
@@ -132,10 +138,12 @@ class Main(object):
         change_forecast_value()
 
     def create_finances(self):
+        """ Makes the Label for the financial information """
         self.display_finances = Tkinter.Label(self.mainframe)
         self.display_finances.grid(row=1, column=0, sticky='w')
 
         def change_finance_values():
+            """ Uses the Google Finance API to get most recent data. """
             current_price = float(getQuotes('MUTF_CA:INI220')[0]['LastTradePrice'])
 
             if datetime.datetime.now().strftime('%H') == 00:
@@ -165,10 +173,13 @@ class Main(object):
         change_finance_values()
 
     def create_date_time(self):
+        """ Makes the label for displaying date, time. """
         self.display_date_time = Tkinter.Label(self.mainframe)
         self.display_date_time.grid(row=0, column=0, sticky='ne')
 
         def change_time_value():
+            """ This gets the system time and date and changes it. It updates
+            every second. """
             new_date_time = time.strftime('%I:%M:%S \n %b %d, %Y')
             if self.the_date_time != new_date_time:
                 self.the_date_time = new_date_time
@@ -184,17 +195,20 @@ class Main(object):
         change_time_value()
 
 
-def initialize_mail_account():
-    M = imaplib.IMAP4_SSL('imap.gmail.com')
+def initialize_mail_account(email_address, password):
+    """ Logs into a gmail account, given login information. """
+    m = imaplib.IMAP4_SSL('imap.gmail.com')
     try:
-        M.login('captain.eli.mirror@gmail.com', PASSWORD)
+        m.login(email_address, password)
     except imaplib.IMAP4.error:
         print"Error logging into email!"
-    return M
-
+    return m
 
 
 def process_mailbox(m):
+    """ Accessing a mail account to get subject from most recent email.
+    :param m: A mailbox, in this case from initialize_mail_account() function.
+    :return: The subject from the most recent email in inbox, a string. """
     output = ""
     rv, data = m.search(None, "ALL")
     if rv != 'OK':
@@ -210,7 +224,7 @@ def process_mailbox(m):
         message = email.message_from_string(data[0][1])
         output += message['Subject']
 
-        return output[0:66]
+        return output[0:66]  # length limit
 
 if __name__ == '__main__':
     root = Tkinter.Tk()
