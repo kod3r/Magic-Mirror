@@ -7,8 +7,6 @@ import Tkinter
 
 from googlefinance import getQuotes
 
-
-
 the_temp, the_time, the_date, the_forecast, the_count, the_email_subject, the_finances = '', '', '', '', '', '', ''
 yesterday_closing = None
 FONT = 60
