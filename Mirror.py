@@ -7,8 +7,8 @@ import Tkinter
 from googlefinance import getQuotes
 
 FONT_1 = 60
-FONT_2 = 45
-FONT_3 = 35
+FONT_2 = 50
+FONT_3 = 40
 
 with open("parameters.txt", "r") as text_file:
     parameters = text_file.read().splitlines()
@@ -80,7 +80,7 @@ class Main(object):
             self.display_email_subject.after(300000, change_the_emails)
         change_the_emails()
 
-    def create_count_up(self, font_size=FONT_1):
+    def create_count_up(self, font_size=FONT_2):
         """ Creates Label to display 'days since event' """
         self.display_count_up = Tkinter.Label(self.mainframe)
         self.display_count_up.grid(row=1, column=0, sticky='e')
@@ -137,7 +137,7 @@ class Main(object):
             self.display_forecast.after(900000, change_forecast_value)
         change_forecast_value()
 
-    def create_finances(self, font_size=FONT_1):
+    def create_finances(self, font_size=FONT_2):
         """ Makes the Label for the financial information """
         self.display_finances = Tkinter.Label(self.mainframe)
         self.display_finances.grid(row=1, column=0, sticky='w')
